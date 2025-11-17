@@ -47,9 +47,13 @@ def main() -> None:
     """Entry point for aoe2-telegram-bot command."""
     # Configure logging only if not already configured
     if not logging.getLogger().hasHandlers():
+        # Get log level from environment variable, default to INFO
+        log_level_name = environ.get("LOG_LEVEL", "INFO").upper()
+        log_level = getattr(logging, log_level_name, logging.INFO)
+
         logging.basicConfig(
             format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-            level=logging.INFO,
+            level=log_level,
         )
 
     bootstrap()
