@@ -6,6 +6,7 @@ from telegram import Update
 from telegram.constants import ChatAction
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
+from ._files_id_db import get_file_id, set_file_id
 from ._folders import audio_caption, audio_folder
 
 logger = logging.getLogger(__name__)
@@ -54,13 +55,34 @@ async def send_audio(
         action=ChatAction.RECORD_VOICE,
     )
 
-    await context.bot.send_audio(
-        chat_id=update.effective_chat.id,
-        audio=audio_file,
-        title=audio_file.stem,
-        thumbnail=audio_caption,
-        disable_notification=True,
-    )
+    # Check if we have a cached file_id
+    cached_file_id = get_file_id(audio_file)
+
+    if cached_file_id:
+        logger.debug(f"Using cached file_id: {cached_file_id}")
+        # Send using file_id (no upload needed)
+        message = await context.bot.send_audio(
+            chat_id=update.effective_chat.id,
+            audio=cached_file_id,
+            title=audio_file.stem,
+            thumbnail=audio_caption,
+            disable_notification=True,
+        )
+    else:
+        logger.debug("No cached file_id, uploading file")
+        # Upload file and cache the file_id
+        message = await context.bot.send_audio(
+            chat_id=update.effective_chat.id,
+            audio=audio_file,
+            title=audio_file.stem,
+            thumbnail=audio_caption,
+            disable_notification=True,
+        )
+        file_id = message.audio.file_id
+        # Save file_id for future use
+        set_file_id(audio_file, file_id)
+        logger.debug(f"Cached new file_id: {file_id}")
+
     logger.info(f"audio sent {audio_file.name}")
 
 

@@ -4,6 +4,7 @@ from typing import Optional
 
 from telegram.ext import ApplicationBuilder
 
+from ._files_id_db import load_cache
 from ._folders import env_file
 from ._handlers import register_handlers
 from .bootstrap import bootstrap
@@ -52,6 +53,10 @@ def main() -> None:
         )
 
     bootstrap()
+
+    logger.info("Loading file ID cache...")
+    load_cache()
+
     application = ApplicationBuilder().token(get_token()).build()
     register_handlers(application)
     logger.info("Starting polling...")

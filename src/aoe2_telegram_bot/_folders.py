@@ -20,3 +20,4 @@ service_file = current_module_folder / "distro" / "aoe2-telegram-bot.service"
 systemd_folder = Path("/etc/systemd/system/")
 config_folder = Path.home() / ".config/aoe2-telegram-bot"
 env_file = config_folder / "env"
+files_id_db = config_folder / "files_id_db.json"
