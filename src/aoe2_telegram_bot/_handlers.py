@@ -95,24 +95,50 @@ async def taunt(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await send_audio(update, context, taunt)
 
 
+async def civilization(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    civ_name = update.message.text.strip("/").lower()
+    civ_file = list(audio_folder.glob(f"civ_{civ_name}.mp3"))
+    logger.debug(f"Civilization {civ_name} found: {civ_file}")
+
+    if not civ_file:
+        logger.debug(f"Civilization {civ_name} not found")
+        await context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            text=f"Civilization {civ_name} not found",
+        )
+        return
+
+    civ = civ_file[0]
+    logger.debug(f"Sending civilization {civ}")
+    await send_audio(update, context, civ)
+
+
 def register_taunt_handlers(application: ApplicationBuilder):
     taunt_number: int = 42
     for i in range(1, taunt_number + 1):
         application.add_handler(CommandHandler(f"{i}", taunt))
 
 
-def register_civilization_handlers(application: ApplicationBuilder):
+def _get_civilization_list() -> list[str]:
     civ_files = list(audio_folder.glob("civ_*.mp3"))
-    for civ_file in civ_files:
-        civ_name = civ_file.stem.replace("civ_", "").lower()
-        application.add_handler(
-            CommandHandler(
-                civ_name,
-                lambda update, context, file=civ_file: send_audio(
-                    update, context, file
-                ),
-            )
-        )
+    civ_names = [civ_file.stem.replace("civ_", "") for civ_file in civ_files]
+    return civ_names
+
+
+def register_civilization_handlers(application: ApplicationBuilder):
+    for civ_name in _get_civilization_list():
+        application.add_handler(CommandHandler(civ_name, civilization))
+
+
+def list_civilizations(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    # this should be cached
+    civ_files = list(audio_folder.glob("civ_*.mp3"))
+    civ_names = [civ_file.stem.replace("civ_", "") for civ_file in civ_files]
+    civ_list = ", ".join(civ_names)
+    await context.bot.send_message(
+        chat_id=update.effective_chat.id,
+        text=f"Available civilizations: {civ_list}",
+    )
 
 
 def register_handlers(application: ApplicationBuilder):
@@ -120,6 +146,7 @@ def register_handlers(application: ApplicationBuilder):
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("aoe", send_sound))
     application.add_handler(CommandHandler("civilization", send_civ))
+    application.add_handler(CommandHandler("list_civilizations", list_civilizations))
     application.add_handler(CommandHandler("civ", send_civ))
     application.add_handler(CommandHandler("taunt", send_taunt))
 
