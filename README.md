@@ -6,12 +6,23 @@ Age Of Empires II Telegram Bot: give a random quote of Age of Empires 2 original
 
 ## Installation
 
-Get the service file from github repository and set an environment file with your telegram bot token as `TGB_TOKEN`
+Install python package from PyPI
+
+```bash
+python3 -m pip install aoe2-bot
+```
+
+Or from source
 
 ```bash
 git clone https://github.com/PercevalSA/aoe2-bot
 cd aoe2-bot
 python3 -m pip install .
+```
+
+Set an environment file with your telegram bot token as `TGB_TOKEN`
+
+```bash
 mkdir -p $HOME/.config/aoe2-bot
 echo 'TGB_TOKEN=xxxx' >$HOME/.config/aoe2-bot/env
 ```
@@ -19,11 +30,23 @@ echo 'TGB_TOKEN=xxxx' >$HOME/.config/aoe2-bot/env
 ## running
 
 When started for the first time the bot will download sounds from internet and store them in the package folder.
-When you start the bot manually you will need to export the token as environment variable.
+When you start the bot manually you will need to export the token as environment variable or set it in the environment file in `$HOME/.config/aoe2-bot/env`
 
 ```bash
-export $(cat $HOME/.config/aoe2-bot/env | xargs)
-python3 -m aoe2_bot
+export TGB_TOKEN=xxxx
+``` 
+
+or create config directory and add token
+
+
+```bash
+mkdir -p ~/.config/aoe2-bot
+echo 'TGB_TOKEN=your_token_here' > ~/.config/aoe2-bot/env
+```
+
+Then just run
+```bash
+aoe2-bot
 ```
 
 If you need the bot to run as a service you can use the provided systemd service file. You can install it with the provided bootstrap script.
