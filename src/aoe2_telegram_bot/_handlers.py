@@ -6,7 +6,7 @@ from telegram import Update
 from telegram.constants import ChatAction
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
-from ._folders import audio_caption, audio_folder
+from ._folders import audio_caption, audio_folder, civilizations_pattern
 
 logger = logging.getLogger(__name__)
 
@@ -95,17 +95,55 @@ async def taunt(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await send_audio(update, context, taunt)
 
 
+async def civilization(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    civ_name = update.message.text.strip("/").lower()
+    civ_file = list(audio_folder.glob(f"{civ_name.capitalize()}.mp3"))
+    logger.debug(f"Civilization {civ_name} found: {civ_file}")
+
+    if not civ_file:
+        logger.debug(f"Civilization {civ_name} not found")
+        await context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            text=f"Civilization {civ_name} not found",
+        )
+        return
+
+    civ = civ_file[0]
+    logger.debug(f"Sending civilization {civ}")
+    await send_audio(update, context, civ)
+
+
 def register_taunt_handlers(application: ApplicationBuilder):
     taunt_number: int = 42
     for i in range(1, taunt_number + 1):
         application.add_handler(CommandHandler(f"{i}", taunt))
 
 
+def _get_civilization_list() -> list[str]:
+    return [str(civ.stem) for civ in list(audio_folder.glob(civilizations_pattern))]
+
+
+def register_civilization_handlers(application: ApplicationBuilder):
+    for civ_name in _get_civilization_list():
+        application.add_handler(CommandHandler(civ_name, civilization))
+
+
+async def list_civilizations(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    civ_list = "\n".join(_get_civilization_list())
+    await context.bot.send_message(
+        chat_id=update.effective_chat.id,
+        text=f"Available civilizations:\n{civ_list}",
+    )
+
+
 def register_handlers(application: ApplicationBuilder):
     logger.info("Registering handlers")
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("aoe", send_sound))
+    application.add_handler(CommandHandler("civilization", send_civ))
+    application.add_handler(CommandHandler("list_civilizations", list_civilizations))
     application.add_handler(CommandHandler("civ", send_civ))
     application.add_handler(CommandHandler("taunt", send_taunt))
 
     register_taunt_handlers(application)
+    register_civilization_handlers(application)
