@@ -15,9 +15,11 @@ audio_archives = [
     "taunt.zip",
 ]
 
-# systemd
 service_file = current_module_folder / "distro" / "aoe2-telegram-bot.service"
-systemd_folder = Path("/etc/systemd/system/")
+
 config_folder = Path.home() / ".config/aoe2-telegram-bot"
 env_file = config_folder / "env"
 files_id_db = config_folder / "files_id_db.json"
+civilizations_pattern = "[A-Z][a-z]*.mp3"
+taunts_pattern = "[0-9][0-9] *.mp3"
+audio_pattern = "*.wav"
