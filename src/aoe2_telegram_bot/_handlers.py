@@ -129,10 +129,10 @@ def register_civilization_handlers(application: ApplicationBuilder):
 
 
 async def list_civilizations(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    civ_list = ", ".join(_get_civilization_list())
+    civ_list = "\n".join(_get_civilization_list())
     await context.bot.send_message(
         chat_id=update.effective_chat.id,
-        text=f"Available civilizations: {civ_list}",
+        text=f"Available civilizations:\n{civ_list}",
     )
 
 
