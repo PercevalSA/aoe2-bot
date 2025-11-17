@@ -6,6 +6,7 @@ stored in the user's config folder.
 
 import json
 from pathlib import Path
+from typing import Optional
 
 from ._folders import files_id_db
 
@@ -24,7 +25,7 @@ def load_cache() -> None:
         pass  # Corrupted or empty file, start fresh
 
 
-def get_file_id(file_path: Path) -> str | None:
+def get_file_id(file_path: Path) -> Optional[str]:
     """Get the telegram file ID for a given file path, or None if not found."""
     return _files_id_cache.get(file_path.name)
 
