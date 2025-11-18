@@ -5,6 +5,7 @@ from typing import Optional
 from telegram import Update
 from telegram.ext import ApplicationBuilder
 
+from ._files_id_db import load_cache
 from ._folders import env_file
 from ._handlers import register_handlers
 from .bootstrap import bootstrap
@@ -47,12 +48,20 @@ def main() -> None:
     """Entry point for aoe2-telegram-bot command."""
     # Configure logging only if not already configured
     if not logging.getLogger().hasHandlers():
+        # Get log level from environment variable, default to INFO
+        log_level_name = environ.get("LOG_LEVEL", "INFO").upper()
+        log_level = getattr(logging, log_level_name, logging.INFO)
+
         logging.basicConfig(
             format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-            level=logging.INFO,
+            level=log_level,
         )
 
     bootstrap()
+
+    logger.info("Loading file ID cache...")
+    load_cache()
+
     application = ApplicationBuilder().token(get_token()).build()
     register_handlers(application)
     logger.info("Starting polling...")

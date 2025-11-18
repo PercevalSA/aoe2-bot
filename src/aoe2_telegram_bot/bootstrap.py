@@ -79,7 +79,11 @@ def create_systemd_service_file() -> None:
     """Entry point for aoe2-telegram-bot-bootstrap command."""
     # Configure logging only if not already configured
     if not logging.getLogger().hasHandlers():
-        logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+        # Get log level from environment variable, default to INFO
+        log_level_name = os.environ.get("LOG_LEVEL", "INFO").upper()
+        log_level = getattr(logging, log_level_name, logging.INFO)
+
+        logging.basicConfig(level=log_level, format="%(levelname)s: %(message)s")
 
     if platform.system() != "Linux":
         logger.error("Systemd service is only available on Linux")
