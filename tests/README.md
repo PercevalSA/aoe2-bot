@@ -91,7 +91,7 @@ async def test_send_audio(mock_update, mock_context):
 ## Continuous Integration
 
 Tests run automatically on GitHub Actions for:
-- Python 3.8, 3.9, 3.10, 3.11, 3.12
+- Python 3.9, 3.10, 3.11, 3.12
 - All pull requests
 - All commits to main branch
 
