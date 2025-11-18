@@ -29,8 +29,8 @@ def test_cache_optimization():
         ("quote2.wav", "file_id_2"),
         ("01 taunt.mp3", "file_id_3"),
         ("02 taunt.mp3", "file_id_4"),
-        ("civ_britons.mp3", "file_id_5"),
-        ("civ_celts.mp3", "file_id_6"),
+        ("Britons.mp3", "file_id_5"),
+        ("Celts.mp3", "file_id_6"),
     ]
 
     for filename, file_id in test_files:
