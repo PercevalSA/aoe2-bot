@@ -109,13 +109,14 @@ def test_load_cache_empty_file(tmp_path, monkeypatch):
 
 def test_cache_persistence(tmp_path, monkeypatch):
     """Test that cache persists to disk."""
-    from aoe2_telegram_bot import _folders
+    from aoe2_telegram_bot import _files_id_db
     from aoe2_telegram_bot._files_id_db import _files_id_cache
 
     cache_file = tmp_path / "cache.json"
-    monkeypatch.setattr(_folders, "files_id_db", cache_file)
+    # Patch files_id_db in the _files_id_db module itself
+    monkeypatch.setattr(_files_id_db, "files_id_db", cache_file)
 
-    # Clear in-memory cache but don't delete file
+    # Start with empty cache
     _files_id_cache.clear()
 
     # Set a file ID (should write to disk)
@@ -124,12 +125,15 @@ def test_cache_persistence(tmp_path, monkeypatch):
     set_file_id(test_file, "persisted_id")
 
     # Verify file was created
-    assert cache_file.exists()
+    assert cache_file.exists(), f"Cache file should exist at {cache_file}"
 
-    # Clear in-memory cache only and reload
+    # Clear in-memory cache only (not the file) and reload
     _files_id_cache.clear()
+
+    # Force load from disk by checking the file exists first
+    assert cache_file.exists(), "Cache file was deleted unexpectedly"
     load_cache()
 
-    # Should load from disk
+    # Should have loaded from disk
     result = get_file_id(test_file)
-    assert result == "persisted_id"
+    assert result == "persisted_id", f"Expected 'persisted_id', got {result}"

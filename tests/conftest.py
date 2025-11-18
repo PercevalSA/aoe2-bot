@@ -35,10 +35,11 @@ def temp_audio_folder(tmp_path, monkeypatch):
     (audio_dir / "Britons.mp3").write_text("britons")
     (audio_dir / "Celts.mp3").write_text("celts")
 
-    # Patch the audio_folder
-    from aoe2_telegram_bot import _folders
+    # Patch audio_folder in both _folders and _handlers modules
+    from aoe2_telegram_bot import _folders, _handlers
 
     monkeypatch.setattr(_folders, "audio_folder", audio_dir)
+    monkeypatch.setattr(_handlers, "audio_folder", audio_dir)
 
     return audio_dir
 
