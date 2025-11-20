@@ -5,9 +5,15 @@ from typing import Optional, Tuple
 
 from telegram import Update
 from telegram.constants import ChatAction
-from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+from telegram.ext import (
+    ApplicationBuilder,
+    CommandHandler,
+    ContextTypes,
+    MessageHandler,
+    filters,
+)
 
-from ._files_id_db import get_file_id, get_random_cached_file, set_file_id
+from ._files_id_db import get_file_id, set_file_id
 from ._folders import (
     audio_caption,
     audio_folder,
@@ -36,23 +42,16 @@ def _get_random_file(
     """
     logger.debug(f"Getting random {category}")
 
-    # First try to get from cache
-    cached = get_random_cached_file(pattern)
-    if cached:
-        filename, file_id = cached
-        logger.debug(f"Using cached {category}: {filename}")
-        return None, file_id
-
     # No cached files, search filesystem
     logger.debug(f"No cached {category} files, searching filesystem")
     files = list(audio_folder.glob(pattern))
-
     if not files:
         logger.warning(f"No {category} files found")
         return None, None
 
     selected = choice(files)
     logger.debug(f"Selected {selected}")
+
     return selected, None
 
 
@@ -74,7 +73,50 @@ def get_random_civilization() -> Tuple[Optional[Path], Optional[str]]:
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_message(
         chat_id=update.effective_chat.id,
-        text="À la bataille! Use /aoe to get a quote from Age of Empires II.",
+        text="🏰 *Bienvenue sur le bot Age of Empires II!* ⚔️\n\n"
+        "À la bataille! Utilisez /aide pour voir toutes les commandes disponibles.\n\n"
+        "Welcome! Use /help to see all available commands.",
+        parse_mode="Markdown",
+    )
+
+
+async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Display help message with available commands."""
+    help_text = """
+🏰 *Age of Empires II Bot* 🎮
+
+*Random Audio Commands:*
+/sound, /bruit, /bruitage - Get a random AoE2 quote
+/taunt, /provoc, /provocation - Get a random taunt
+/civ, /civilisation - Get a random civilization sound
+
+*Specific Commands:*
+/1 to /42 - Get a specific taunt by number
+  _Example: /11 for "11"_
+/britons, /celts, /vikings, etc. - Get a specific civilization sound
+  _Example: /britons_
+
+*List Commands:*
+/list, /liste - Show all available civilizations
+
+*Help:*
+/help, /aide - Show this help message
+/start - Welcome message
+
+À la bataille! ⚔️
+"""
+    await context.bot.send_message(
+        chat_id=update.effective_chat.id,
+        text=help_text,
+        parse_mode="Markdown",
+    )
+
+
+async def unknown_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handle unknown commands."""
+    await context.bot.send_message(
+        chat_id=update.effective_chat.id,
+        text="Unknown command. Use /help to see available commands.",
     )
 
 
@@ -186,8 +228,10 @@ async def taunt(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def civilization(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    civ_name = update.message.text.strip("/").lower()
-    civ_file = list(audio_folder.glob(f"{civ_name.capitalize()}.mp3"))
+    civ_name = update.message.text.strip("/")
+    # Try case-insensitive search by checking all files
+    all_civs = list(audio_folder.glob(civilizations_pattern))
+    civ_file = [civ for civ in all_civs if civ.stem.lower() == civ_name.lower()]
     logger.debug(f"Civilization {civ_name} found: {civ_file}")
 
     if not civ_file:
@@ -215,11 +259,12 @@ def _get_civilization_list() -> list[str]:
 
 def register_civilization_handlers(application: ApplicationBuilder):
     for civ_name in _get_civilization_list():
-        application.add_handler(CommandHandler(civ_name, civilization))
+        # Register with lowercase to allow commands without capitals
+        application.add_handler(CommandHandler(civ_name.lower(), civilization))
 
 
 async def list_civilizations(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    civ_list = "\n".join(_get_civilization_list())
+    civ_list = "\n".join(f"/{civ}" for civ in _get_civilization_list())
     await context.bot.send_message(
         chat_id=update.effective_chat.id,
         text=f"Available civilizations:\n{civ_list}",
@@ -229,11 +274,21 @@ async def list_civilizations(update: Update, context: ContextTypes.DEFAULT_TYPE)
 def register_handlers(application: ApplicationBuilder):
     logger.info("Registering handlers")
     application.add_handler(CommandHandler("start", start))
-    application.add_handler(CommandHandler("aoe", send_sound))
-    application.add_handler(CommandHandler("civilization", send_civ))
-    application.add_handler(CommandHandler("list_civilizations", list_civilizations))
+    application.add_handler(CommandHandler("help", help_command))
+    application.add_handler(CommandHandler("aide", help_command))
+    application.add_handler(CommandHandler("sound", send_sound))
+    application.add_handler(CommandHandler("bruit", send_sound))
+    application.add_handler(CommandHandler("bruitage", send_sound))
     application.add_handler(CommandHandler("civ", send_civ))
+    application.add_handler(CommandHandler("civilisation", send_civ))
+    application.add_handler(CommandHandler("list", list_civilizations))
+    application.add_handler(CommandHandler("liste", list_civilizations))
     application.add_handler(CommandHandler("taunt", send_taunt))
+    application.add_handler(CommandHandler("provoc", send_taunt))
+    application.add_handler(CommandHandler("provocation", send_taunt))
 
     register_taunt_handlers(application)
     register_civilization_handlers(application)
+
+    # Unknown command handler must be registered last
+    application.add_handler(MessageHandler(filters.COMMAND, unknown_command))

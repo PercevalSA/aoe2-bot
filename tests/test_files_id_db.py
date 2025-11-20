@@ -4,7 +4,6 @@ from aoe2_telegram_bot._files_id_db import (
     clear_file_id_db,
     get_all_file_ids,
     get_file_id,
-    get_random_cached_file,
     load_cache,
     set_file_id,
 )
@@ -45,40 +44,6 @@ def test_get_all_file_ids(tmp_path):
     assert "test2.wav" in all_ids
     assert all_ids["test1.wav"] == "id_1"
     assert all_ids["test2.wav"] == "id_2"
-
-
-def test_get_random_cached_file():
-    """Test getting a random file from cache by pattern."""
-    from aoe2_telegram_bot._files_id_db import _files_id_cache
-
-    # Manually populate cache
-    _files_id_cache["quote1.wav"] = "id_1"
-    _files_id_cache["quote2.wav"] = "id_2"
-    _files_id_cache["01 taunt.mp3"] = "id_3"
-
-    # Test getting wav files
-    result = get_random_cached_file("*.wav")
-    assert result is not None
-    filename, file_id = result
-    assert filename in ["quote1.wav", "quote2.wav"]
-    assert file_id in ["id_1", "id_2"]
-
-    # Test getting taunt files
-    result = get_random_cached_file("[0-9][0-9] *.mp3")
-    assert result is not None
-    filename, file_id = result
-    assert filename == "01 taunt.mp3"
-    assert file_id == "id_3"
-
-
-def test_get_random_cached_file_no_match():
-    """Test getting random file when no matches exist."""
-    from aoe2_telegram_bot._files_id_db import _files_id_cache
-
-    _files_id_cache["test.wav"] = "id_1"
-
-    result = get_random_cached_file("*.mp3")
-    assert result is None
 
 
 def test_clear_file_id_db(tmp_path):
@@ -137,3 +102,23 @@ def test_cache_persistence(tmp_path, monkeypatch):
     # Should have loaded from disk
     result = get_file_id(test_file)
     assert result == "persisted_id", f"Expected 'persisted_id', got {result}"
+
+
+def test_load_cache_with_corrupted_json(tmp_path, monkeypatch):
+    """Test loading cache when JSON file is corrupted."""
+    from aoe2_telegram_bot import _files_id_db
+    from aoe2_telegram_bot._files_id_db import _files_id_cache
+
+    cache_file = tmp_path / "cache.json"
+    monkeypatch.setattr(_files_id_db, "files_id_db", cache_file)
+
+    # Write corrupted JSON to file
+    cache_file.write_text("{invalid json content")
+
+    # Clear cache and try to load corrupted file
+    _files_id_cache.clear()
+    load_cache()  # Should not raise exception
+
+    # Cache should be empty after failing to load
+    all_ids = get_all_file_ids()
+    assert len(all_ids) == 0
