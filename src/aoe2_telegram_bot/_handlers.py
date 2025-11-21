@@ -33,33 +33,23 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "🏰 *Bienvenue sur le bot Sound Box Age of Empires II!* ⚔️\n\n"
             "utilisez /aide pour la liste des commandes.\n"
             "use /help for the list of commands.\n\n"
-            "Vous pouvez aussi utiliser /start pour revenir à ce message. / You can also use /start to return here."
+            "Vous pouvez aussi utiliser /start pour revenir à ce message."
+            "You can also use /start to return here."
         ),
         parse_mode="Markdown",
     )
 
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Display help message with available commands in the language
-    matching the invoked command (/help -> English, /aide -> Français).
-    """
-    # Determine which command was used to invoke help
-    invoked = None
-    if (
-        update
-        and getattr(update, "message", None)
-        and getattr(update.message, "text", None)
-    ):
-        invoked = update.message.text.split()[0].lower()
+    """Display help message with available commands in english"""
 
-    # English help — only English command aliases
     en = """
 🏰 *Age of Empires II Bot* 🎮
 
 *Random Audio Commands:*
 /sound - Get a random AoE2 quote
 /taunt - Get a random taunt
-/civ - Get a random civilization sound
+/civilization - Get a random civilization sound
 
 *Specific Commands:*
 /1 to /42 - Get a specific taunt by number
@@ -68,7 +58,7 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     _Example: /britons_
 
 *List Commands:*
-/list_sounds - Show all available sound quotes
+/list_sounds - Show all available sounds
 /list_taunts - Show all available taunts
 /list_civilizations - Show all available civilizations
 
@@ -79,7 +69,14 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 à la bataille! ⚔️
 """
 
-    # French help — only French command aliases
+    await context.bot.send_message(
+        chat_id=update.effective_chat.id, text=en, parse_mode="Markdown"
+    )
+
+
+async def help_command_french(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Display help message with available commands in french"""
+
     fr = """
 🏰 *Bot Age of Empires II* 🎮
 
@@ -105,17 +102,8 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 à la bataille ! ⚔️
 """
-
-    # Choose language: french if invoked with /aide, else english
-    if invoked and invoked.startswith("/aide"):
-        text = fr
-    else:
-        text = en
-
     await context.bot.send_message(
-        chat_id=update.effective_chat.id,
-        text=text,
-        parse_mode="Markdown",
+        chat_id=update.effective_chat.id, text=fr, parse_mode="Markdown"
     )
 
 
@@ -333,7 +321,7 @@ def register_handlers(application: ApplicationBuilder):
     handlers = {
         "start": start,
         "help": help_command,
-        "aide": help_command,
+        "aide": help_command_french,
         "sound": send_sound,
         "bruitage": send_sound,
         "civilization": send_civ,
