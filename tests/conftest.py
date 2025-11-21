@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from aoe2_telegram_bot._files_id_db import clear_file_id_db
+from aoe2_telegram_bot._files import clear_file_id_db
 
 
 @pytest.fixture(autouse=True)
@@ -35,11 +35,13 @@ def temp_audio_folder(tmp_path, monkeypatch):
     (audio_dir / "Britons.mp3").write_text("britons")
     (audio_dir / "Celts.mp3").write_text("celts")
 
-    # Patch audio_folder in both _folders and _handlers modules
-    from aoe2_telegram_bot import _folders, _handlers
+    # Patch audio_folder in _folders, _handlers and _files modules so all
+    # places that cached the value at import time use the temporary folder.
+    from aoe2_telegram_bot import _files, _folders, _handlers
 
     monkeypatch.setattr(_folders, "audio_folder", audio_dir)
     monkeypatch.setattr(_handlers, "audio_folder", audio_dir)
+    monkeypatch.setattr(_files, "audio_folder", audio_dir)
 
     return audio_dir
 

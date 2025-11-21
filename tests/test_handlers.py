@@ -2,19 +2,21 @@
 
 import pytest
 
-from aoe2_telegram_bot._files_id_db import set_file_id
-from aoe2_telegram_bot._handlers import (
+from aoe2_telegram_bot._files import (
     _get_random_file,
-    civilization,
     get_random_audio,
     get_random_civilization,
     get_random_taunt,
+    set_file_id,
+)
+from aoe2_telegram_bot._handlers import (
+    civilization,
     help_command,
     list_civilizations,
     send_audio,
-    send_civ,
-    send_sound,
-    send_taunt,
+    send_random_civilization,
+    send_random_sound,
+    send_random_taunt,
     start,
     taunt,
     unknown_command,
@@ -23,7 +25,7 @@ from aoe2_telegram_bot._handlers import (
 
 def test_get_random_file_from_filesystem(temp_audio_folder):
     """Test getting random file from filesystem when cache is empty."""
-    file_path, file_id = _get_random_file("*.wav", "audio")
+    file_path, file_id = _get_random_file("*.wav")
 
     assert file_path is not None
     assert file_path.suffix == ".wav"
@@ -39,7 +41,7 @@ def test_get_random_file_no_files(tmp_path, monkeypatch):
     empty_dir.mkdir()
     monkeypatch.setattr(_folders, "audio_folder", empty_dir)
 
-    file_path, file_id = _get_random_file("*.wav", "audio")
+    file_path, file_id = _get_random_file("*.wav")
 
     assert file_path is None
     assert file_id is None
@@ -76,7 +78,7 @@ async def test_send_audio_new_file(
     temp_audio_folder, mock_update, mock_context, mock_audio_caption
 ):
     """Test sending a new audio file (not in cache)."""
-    from aoe2_telegram_bot._files_id_db import get_file_id
+    from aoe2_telegram_bot._files import get_file_id
 
     audio_file = temp_audio_folder / "test1.wav"
 
@@ -180,7 +182,7 @@ async def test_send_sound(
     temp_audio_folder, mock_update, mock_context, mock_audio_caption
 ):
     """Test send_sound command."""
-    await send_sound(mock_update, mock_context)
+    await send_random_sound(mock_update, mock_context)
 
     # Should have sent audio
     mock_context.bot.send_audio.assert_called_once()
@@ -191,7 +193,7 @@ async def test_send_civ(
     temp_audio_folder, mock_update, mock_context, mock_audio_caption
 ):
     """Test send_civ command."""
-    await send_civ(mock_update, mock_context)
+    await send_random_civilization(mock_update, mock_context)
 
     # Should have sent audio
     mock_context.bot.send_audio.assert_called_once()
@@ -202,7 +204,7 @@ async def test_send_taunt_command(
     temp_audio_folder, mock_update, mock_context, mock_audio_caption
 ):
     """Test send_taunt command."""
-    await send_taunt(mock_update, mock_context)
+    await send_random_taunt(mock_update, mock_context)
 
     # Should have sent audio
     mock_context.bot.send_audio.assert_called_once()

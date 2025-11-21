@@ -1,6 +1,6 @@
 """Tests for file ID database functionality."""
 
-from aoe2_telegram_bot._files_id_db import (
+from aoe2_telegram_bot._files import (
     clear_file_id_db,
     get_all_file_ids,
     get_file_id,
@@ -74,12 +74,12 @@ def test_load_cache_empty_file(tmp_path, monkeypatch):
 
 def test_cache_persistence(tmp_path, monkeypatch):
     """Test that cache persists to disk."""
-    from aoe2_telegram_bot import _files_id_db
-    from aoe2_telegram_bot._files_id_db import _files_id_cache
+    from aoe2_telegram_bot import _files
+    from aoe2_telegram_bot._files import _files_id_cache
 
     cache_file = tmp_path / "cache.json"
     # Patch files_id_db in the _files_id_db module itself
-    monkeypatch.setattr(_files_id_db, "files_id_db", cache_file)
+    monkeypatch.setattr(_files, "files_id_db", cache_file)
 
     # Start with empty cache
     _files_id_cache.clear()
@@ -106,11 +106,11 @@ def test_cache_persistence(tmp_path, monkeypatch):
 
 def test_load_cache_with_corrupted_json(tmp_path, monkeypatch):
     """Test loading cache when JSON file is corrupted."""
-    from aoe2_telegram_bot import _files_id_db
-    from aoe2_telegram_bot._files_id_db import _files_id_cache
+    from aoe2_telegram_bot import _files
+    from aoe2_telegram_bot._files import _files_id_cache
 
     cache_file = tmp_path / "cache.json"
-    monkeypatch.setattr(_files_id_db, "files_id_db", cache_file)
+    monkeypatch.setattr(_files, "files_id_db", cache_file)
 
     # Write corrupted JSON to file
     cache_file.write_text("{invalid json content")
